@@ -1,6 +1,6 @@
+com\nisum\userservice\dto\ErrorResponse.class
 com\nisum\userservice\config\HsqlConfig.class
 com\nisum\userservice\dto\UserDTO.class
-com\nisum\userservice\controller\UserController$ErrorResponse.class
 com\nisum\userservice\repository\ValidationConfigRepository.class
 com\example\userservice\dto\ValidationConfigDTO.class
 com\nisum\userservice\exception\ErrorResponse.class

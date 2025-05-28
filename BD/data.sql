@@ -1,6 +1,8 @@
 -- Insertar configuraciones de validación
 INSERT INTO validation_config (id, config_key, config_value, description) VALUES
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'email.regex', '(?:[a-z0-9!#$%&''*+/=?^_`{|}~-]+(?:\.[a-z0-9!#$%&''*+/=?^_`{|}~-]+)*|"(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21\x23-\x5b\x5d-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])*")@(?:(?:[a-z0-9](?:[a-z0-9-]*[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]*[a-z0-9])?|\[(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?|[a-z0-9-]*[a-z0-9]:(?:[\x01-\x08\x0b\x0c\x0e-\x1f\x21-\x5a\x53-\x7f]|\\[\x01-\x09\x0b\x0c\x0e-\x7f])+)\])', 'Expresión regular para validar formato de email'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a12', 'name.min.length', '3', 'Longitud mínima para nombres'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'password.min.length', '8', 'Longitud mínima para contraseñas'),
-('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'password.pattern', '^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z]).*$', 'La contraseña debe contener al menos un número, una letra minúscula y una mayúscula'); 
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13', 'password.min.length', '8', 'La contraseña debe tener al menos 8 caracteres'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14', 'password.require.number', '.*[0-9].*', 'La contraseña debe contener al menos un número'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15', 'password.require.lowercase', '.*[a-z].*', 'La contraseña debe contener al menos una letra minúscula'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16', 'password.require.uppercase', '.*[A-Z].*', 'La contraseña debe contener al menos una letra mayúscula'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17', 'password.require.special', '.*[@#$%^&+=!?].*', 'La contraseña debe contener al menos un carácter especial'),
+('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18', 'password.no.spaces', 'true', 'La contraseña no debe contener espacios'); 

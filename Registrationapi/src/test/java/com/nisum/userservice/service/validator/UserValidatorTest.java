@@ -6,13 +6,13 @@ import com.nisum.userservice.model.ValidationConfig;
 import com.nisum.userservice.repository.UserRepository;
 import com.nisum.userservice.repository.ValidationConfigRepository;
 import com.nisum.userservice.service.validator.impl.UserValidatorImpl;
+import com.nisum.userservice.exception.UserException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.util.Optional;
 
@@ -63,31 +63,31 @@ class UserValidatorTest {
     @Test
     void validateUser_NullName() {
         userDTO.setName(null);
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_EmptyName() {
         userDTO.setName("");
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_ShortName() {
         userDTO.setName("Jo");
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_NullEmail() {
         userDTO.setEmail(null);
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_InvalidEmail() {
         userDTO.setEmail("invalid-email");
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
@@ -95,18 +95,18 @@ class UserValidatorTest {
         User existingUser = new User();
         existingUser.setEmail(userDTO.getEmail());
         when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(existingUser));
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_NullPassword() {
         userDTO.setPassword(null);
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 
     @Test
     void validateUser_ShortPassword() {
         userDTO.setPassword("123");
-        assertThrows(ResponseStatusException.class, () -> userValidator.validateUser(userDTO));
+        assertThrows(UserException.class, () -> userValidator.validateUser(userDTO));
     }
 } 

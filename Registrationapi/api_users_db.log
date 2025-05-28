@@ -1,1 +1,34 @@
- 
+/*C2*/SET SCHEMA PUBLIC
+DROP TABLE IF EXISTS phones CASCADE
+DROP TABLE IF EXISTS users CASCADE
+DROP TABLE IF EXISTS validation_config CASCADE
+CREATE TABLE validation_config ( id VARCHAR(36) NOT NULL, config_key VARCHAR(255) NOT NULL UNIQUE, config_value VARCHAR(1000) NOT NULL, description VARCHAR(255), PRIMARY KEY (id) )
+CREATE TABLE users ( id VARCHAR(36) NOT NULL, name VARCHAR(255) NOT NULL, email VARCHAR(255) NOT NULL UNIQUE, password VARCHAR(255) NOT NULL, created TIMESTAMP NOT NULL, modified TIMESTAMP NOT NULL, last_login TIMESTAMP NOT NULL, token VARCHAR(255), is_active BOOLEAN NOT NULL, PRIMARY KEY (id) )
+CREATE TABLE phones ( id BIGINT IDENTITY NOT NULL, number VARCHAR(255) NOT NULL, city_code VARCHAR(255) NOT NULL, country_code VARCHAR(255) NOT NULL, user_id VARCHAR(36) NOT NULL, PRIMARY KEY (id), FOREIGN KEY (user_id) REFERENCES users(id) )
+CREATE INDEX idx_users_email ON users(email)
+CREATE INDEX idx_phones_user_id ON phones(user_id)
+CREATE INDEX idx_validation_config_key ON validation_config(config_key)
+ALTER TABLE users ALTER COLUMN is_active SET DEFAULT TRUE
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a13','password.min.length','8','La contrase\u00f1a debe tener al menos 8 caracteres')
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a14','password.require.number','.*[0-9].*','La contrase\u00f1a debe contener al menos un n\u00famero')
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a15','password.require.lowercase','.*[a-z].*','La contrase\u00f1a debe contener al menos una letra min\u00fascula')
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a16','password.require.uppercase','.*[A-Z].*','La contrase\u00f1a debe contener al menos una letra may\u00fascula')
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a17','password.require.special','.*[@#$%^&+=!?].*','La contrase\u00f1a debe contener al menos un car\u00e1cter especial')
+INSERT INTO VALIDATION_CONFIG VALUES('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a18','password.no.spaces','true','La contrase\u00f1a no debe contener espacios')
+COMMIT
+INSERT INTO USERS VALUES('d18d8220-6c13-4ba8-b30e-ff4c307a2307','Usuario Email Duplicado','usuario6@ejemplo.com','Abc123@#$','2025-05-28 15:52:38.903886','2025-05-28 15:52:38.903886','2025-05-28 15:52:38.903886','9be9698a-1abf-451b-989c-9b6279ed95df',TRUE)
+INSERT INTO PHONES VALUES(0,'1234567','1','57','d18d8220-6c13-4ba8-b30e-ff4c307a2307')
+COMMIT
+INSERT INTO USERS VALUES('30938203-6829-45b8-9cf1-dfb3fe82c751','Test User','test@example.com','Abc123@#$','2025-05-28 15:53:28.981020','2025-05-28 15:53:28.981020','2025-05-28 15:53:28.981020','fdd91aaa-3517-418d-9353-9e889dc77687',TRUE)
+INSERT INTO PHONES VALUES(1,'1234567','1','57','30938203-6829-45b8-9cf1-dfb3fe82c751')
+COMMIT
+INSERT INTO USERS VALUES('33d58ccd-9c53-44de-be14-d3e0360dcb73','Juan P\u00e9rez','juan.perez@ejemplo.com','Abc123@#$','2025-05-28 15:53:35.052049','2025-05-28 15:53:35.052049','2025-05-28 15:53:35.052049','7646e65f-b9d1-4cd9-bde2-f52b7e91593d',TRUE)
+INSERT INTO PHONES VALUES(2,'1234567','1','57','33d58ccd-9c53-44de-be14-d3e0360dcb73')
+COMMIT
+INSERT INTO USERS VALUES('8fcb3c62-e6c1-4e18-a6c6-3af980091b5f','Laura Martinez','laura@martinez.com','Password123!','2025-05-28 15:53:47.993530','2025-05-28 15:53:47.993530','2025-05-28 15:53:47.993530','c9e0c9cf-3f94-4408-ab7f-56628fb084da',TRUE)
+INSERT INTO PHONES VALUES(3,'123456789','1','57','8fcb3c62-e6c1-4e18-a6c6-3af980091b5f')
+COMMIT
+INSERT INTO USERS VALUES('be1de210-60f8-4999-a4f2-fefd24b5d5b3','Roberto Jim\u00e9nez','roberto@jimenez.com','MultiPhone1@','2025-05-28 15:55:01.034953','2025-05-28 15:55:01.034953','2025-05-28 15:55:01.034953','b188be37-7235-4fb3-a207-60f6dc285b58',TRUE)
+INSERT INTO PHONES VALUES(4,'99887766','9','57','be1de210-60f8-4999-a4f2-fefd24b5d5b3')
+INSERT INTO PHONES VALUES(5,'33445566','2','58','be1de210-60f8-4999-a4f2-fefd24b5d5b3')
+COMMIT

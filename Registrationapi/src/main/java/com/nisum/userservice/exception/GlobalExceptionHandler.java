@@ -18,6 +18,7 @@ import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.security.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
+import com.nisum.userservice.dto.ErrorResponse;
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
@@ -48,38 +49,40 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleUserException(UserException ex) {
         logger.error("Error de usuario: {}", ex.getMessage());
         ErrorResponse error = new ErrorResponse(ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(ResponseStatusException.class)
     public ResponseEntity<ErrorResponse> handleResponseStatusException(ResponseStatusException ex) {
-        String mensaje = ex.getReason();
-        if (mensaje == null) {
-            mensaje = "Error en la solicitud";
-        } else if (mensaje.contains("CONFLICT")) {
-            mensaje = "El correo ya está registrado";
-        } else if (mensaje.contains("formato del correo electrónico")) {
-            mensaje = "Formato de correo incorrecto";
-        } else if (mensaje.contains("contraseña")) {
-            mensaje = "La contraseña no cumple con los requisitos";
+        String message = ex.getReason();
+        logger.error("Mensaje original: {}", message);
+        
+        if (message != null) {
+            // Si el mensaje contiene el prefijo HTTP, extraer solo el mensaje
+            if (message.contains("400 BAD_REQUEST")) {
+                message = message.substring(message.indexOf("\"") + 1, message.lastIndexOf("\""));
+            }
         }
-        logger.error("Error de estado: {} - {}", ex.getStatus(), mensaje);
-        ErrorResponse error = new ErrorResponse(mensaje);
-        return new ResponseEntity<>(error, ex.getStatus());
+        
+        logger.error("Mensaje procesado: {}", message);
+        ErrorResponse errorResponse = new ErrorResponse(message != null ? message : "Error desconocido");
+        return new ResponseEntity<>(errorResponse, ex.getStatus());
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
         logger.error("Error en el formato de la solicitud: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("Faltan campos requeridos en la solicitud");
+        ErrorResponse error = new ErrorResponse("Error en el formato de la solicitud");
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleAllExceptions(Exception ex) {
+    public ResponseEntity<ErrorResponse> handleException(Exception ex) {
         logger.error("Error interno del servidor: ", ex);
-        ErrorResponse error = new ErrorResponse("Ha ocurrido un error inesperado. Por favor, intente más tarde.");
-        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+        return new ResponseEntity<>(
+            new ErrorResponse("Error interno del servidor: " + ex.getMessage()),
+            HttpStatus.INTERNAL_SERVER_ERROR
+        );
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
@@ -92,7 +95,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleValidationExceptions(MethodArgumentNotValidException ex) {
         logger.error("Error de validación: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("Faltan campos requeridos en la solicitud");
+        ErrorResponse error = new ErrorResponse("Error de validación en los datos");
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
@@ -113,14 +116,14 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentTypeMismatch(MethodArgumentTypeMismatchException ex) {
         logger.error("Error de tipo de argumento: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("Tipo de argumento inválido");
+        ErrorResponse error = new ErrorResponse("Error en el tipo de datos");
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingServletRequestParameter(MissingServletRequestParameterException ex) {
         logger.error("Parámetro faltante: {}", ex.getMessage());
-        ErrorResponse error = new ErrorResponse("Faltan campos requeridos en la solicitud");
+        ErrorResponse error = new ErrorResponse("Faltan parámetros requeridos");
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 } 

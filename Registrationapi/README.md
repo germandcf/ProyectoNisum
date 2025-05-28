@@ -40,26 +40,45 @@ POST /users
 Content-Type: application/json
 
 {
-  "name": "Laura Martínez",
-  "email": "laura@martinez.com",
-  "password": "SecurePass123",
+  "name": "Roberto Jiménez",
+  "email": "roberto@jimenez.com",
+  "password": "MultiPhone1@",
   "phones": [
     {
-      "number": "12345678",
-      "cityCode": "2",
+      "number": "99887766",
+      "cityCode": "9",
       "countryCode": "57"
+    },
+    {
+      "number": "33445566",
+      "cityCode": "2",
+      "countryCode": "58"
     }
   ]
 }
 
 ### Respuesta Exitosa (201 Created)
 {
-    "id": "uuid-generado",
-    "created": "2024-03-14",
-    "modified": "2024-03-14",
-    "lastLogin": null,
-    "token": "jwt-token",
-    "isActive": true
+    "name": "Roberto Jiménez",
+    "email": "roberto@jimenez.com",
+    "password": "MultiPhone1@",
+    "phones": [
+        {
+            "number": "99887766",
+            "cityCode": "9",
+            "countryCode": "57"
+        },
+        {
+            "number": "33445566",
+            "cityCode": "2",
+            "countryCode": "58"
+        }
+    ],
+    "created": "2025-05-28 15:55:01",
+    "modified": "2025-05-28 15:55:01",
+    "lastLogin": "2025-05-28 15:55:01",
+    "token": "b188be37-7235-4fb3-a207-60f6dc285b58",
+    "active": true
 }
 
 
@@ -79,7 +98,7 @@ Credenciales:
 
 ## Solución de Problemas
 
-1. Si el puerto 8090 está en uso:
+1. Si el puerto 8080 está en uso:
    - Cambia el puerto en application.properties
    - O identifica y cierra el proceso que está usando el puerto
 

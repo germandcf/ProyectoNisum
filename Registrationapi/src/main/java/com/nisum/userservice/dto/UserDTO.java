@@ -1,46 +1,40 @@
 package com.nisum.userservice.dto;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
-import java.util.Date;
 
-@Schema(description = "DTO para usuario")
+@Schema(description = "DTO para usuarios")
 public class UserDTO {
-    @Schema(description = "ID del usuario")
     private String id;
 
-    @Schema(description = "Nombre del usuario")
+    @Schema(description = "Nombre del usuario", example = "Juan Pérez")
     private String name;
 
-    @Schema(description = "Email del usuario")
+    @Schema(description = "Correo electrónico del usuario", example = "juan@example.com")
     private String email;
 
-    @Schema(description = "Contraseña del usuario")
+    @Schema(description = "Contraseña del usuario", example = "Password123")
     private String password;
 
     @Schema(description = "Lista de teléfonos del usuario")
     private List<PhoneDTO> phones;
 
-    @Schema(description = "Fecha de creación", example = "2024-03-19")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date created;
+    @Schema(description = "Fecha de creación del usuario", example = "2024-05-28 14:30:00")
+    private String created;
 
-    @Schema(description = "Fecha de modificación", example = "2024-03-19")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date modified;
+    @Schema(description = "Fecha de última modificación del usuario", example = "2024-05-28 14:30:00")
+    private String modified;
 
-    @Schema(description = "Fecha del último login", example = "2024-03-19")
-    @JsonFormat(pattern = "yyyy-MM-dd")
-    private Date lastLogin;
+    @Schema(description = "Fecha del último login del usuario", example = "2024-05-28 14:30:00")
+    private String lastLogin;
 
-    @Schema(description = "Token del usuario")
+    @Schema(description = "Token de autenticación del usuario")
     private String token;
 
-    @Schema(description = "Estado activo del usuario")
+    @Schema(description = "Estado de activación del usuario")
     private boolean active;
 
-    // Getters y Setters
     public String getId() {
         return id;
     }
@@ -81,27 +75,27 @@ public class UserDTO {
         this.phones = phones;
     }
 
-    public Date getCreated() {
+    public String getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(String created) {
         this.created = created;
     }
 
-    public Date getModified() {
+    public String getModified() {
         return modified;
     }
 
-    public void setModified(Date modified) {
+    public void setModified(String modified) {
         this.modified = modified;
     }
 
-    public Date getLastLogin() {
+    public String getLastLogin() {
         return lastLogin;
     }
 
-    public void setLastLogin(Date lastLogin) {
+    public void setLastLogin(String lastLogin) {
         this.lastLogin = lastLogin;
     }
 

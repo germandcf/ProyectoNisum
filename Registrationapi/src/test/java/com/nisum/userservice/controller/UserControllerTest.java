@@ -2,7 +2,11 @@ package com.nisum.userservice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nisum.userservice.dto.UserDTO;
+import com.nisum.userservice.dto.PhoneDTO;
+import com.nisum.userservice.model.User;
+import com.nisum.userservice.model.Phone;
 import com.nisum.userservice.service.UserService;
+import com.nisum.userservice.service.validator.UserValidator;
 import com.nisum.userservice.repository.ValidationConfigRepository;
 import com.nisum.userservice.repository.UserRepository;
 import com.nisum.userservice.model.ValidationConfig;
@@ -14,15 +18,17 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.Date;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,30 +50,58 @@ class UserControllerTest {
     @MockBean
     private UserRepository userRepository;
 
+    @MockBean
+    private UserValidator userValidator;
+
+    private DateTimeFormatter dateFormatter;
     private UserDTO userDTO;
+    private User user;
     private String userId;
 
     @BeforeEach
     void setUp() {
+        dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+        
         userId = UUID.randomUUID().toString();
         userDTO = new UserDTO();
         userDTO.setId(userId);
         userDTO.setName("Test User");
         userDTO.setEmail("test@example.com");
-        userDTO.setPassword("Password123@");
-        userDTO.setCreated(new Date());
-        userDTO.setModified(new Date());
-        userDTO.setLastLogin(new Date());
+        userDTO.setPassword("Password123!");
+        userDTO.setCreated(LocalDateTime.now().format(dateFormatter));
+        userDTO.setModified(LocalDateTime.now().format(dateFormatter));
+        userDTO.setLastLogin(LocalDateTime.now().format(dateFormatter));
         userDTO.setToken("test-token");
         userDTO.setActive(true);
 
-        // Configurar las validaciones necesarias
-        ValidationConfig emailRegexConfig = new ValidationConfig();
-        emailRegexConfig.setConfigKey("email.regex");
-        emailRegexConfig.setConfigValue("^[A-Za-z0-9+_.-]+@(.+)$");
-        when(validationConfigRepository.findByConfigKey("email.regex"))
-            .thenReturn(Optional.of(emailRegexConfig));
+        List<PhoneDTO> phones = new ArrayList<>();
+        PhoneDTO phone = new PhoneDTO();
+        phone.setNumber("123456789");
+        phone.setCityCode("1");
+        phone.setCountryCode("57");
+        phones.add(phone);
+        userDTO.setPhones(phones);
 
+        user = new User();
+        user.setName("Test User");
+        user.setEmail("test@example.com");
+        user.setPassword("Password123!");
+        user.setCreated(LocalDateTime.now());
+        user.setModified(LocalDateTime.now());
+        user.setLastLogin(LocalDateTime.now());
+        user.setToken("test-token");
+        user.setActive(true);
+
+        List<Phone> userPhones = new ArrayList<>();
+        Phone userPhone = new Phone();
+        userPhone.setNumber("123456789");
+        userPhone.setCityCode("1");
+        userPhone.setCountryCode("57");
+        userPhone.setUser(user);
+        userPhones.add(userPhone);
+        user.setPhones(userPhones);
+
+        // Configurar las validaciones necesarias
         ValidationConfig passwordMinLengthConfig = new ValidationConfig();
         passwordMinLengthConfig.setConfigKey("password.min.length");
         passwordMinLengthConfig.setConfigValue("8");
@@ -86,9 +120,6 @@ class UserControllerTest {
         nameMinLengthConfig.setConfigValue("3");
         when(validationConfigRepository.findByConfigKey("name.min.length"))
             .thenReturn(Optional.of(nameMinLengthConfig));
-
-        // Configurar el mock del repositorio de usuarios
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.empty());
     }
 
     @Test
@@ -96,7 +127,7 @@ class UserControllerTest {
         when(userService.createUser(any(UserDTO.class))).thenReturn(userDTO);
 
         mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(userDTO)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(userId))
@@ -158,7 +189,7 @@ class UserControllerTest {
         when(userService.updateUser(anyString(), any(UserDTO.class))).thenReturn(userDTO);
 
         mockMvc.perform(put("/api/users/{id}", userId)
-                .contentType(MediaType.APPLICATION_JSON)
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
                 .content(objectMapper.writeValueAsString(userDTO)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
@@ -168,6 +199,8 @@ class UserControllerTest {
 
     @Test
     void deleteUser_Success() throws Exception {
+        doNothing().when(userService).deleteUser(anyString());
+
         mockMvc.perform(delete("/api/users/{id}", userId))
                 .andExpect(status().isNoContent());
     }
@@ -176,7 +209,7 @@ class UserControllerTest {
     void updateLastLogin_Success() throws Exception {
         when(userService.updateLastLogin(userId)).thenReturn(Optional.of(userDTO));
 
-        mockMvc.perform(patch("/api/users/{id}/last-login", userId))
+        mockMvc.perform(put("/api/users/{id}/last-login", userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
                 .andExpect(jsonPath("$.lastLogin").exists());
@@ -186,7 +219,7 @@ class UserControllerTest {
     void updateLastLogin_NotFound() throws Exception {
         when(userService.updateLastLogin(anyString())).thenReturn(Optional.empty());
 
-        mockMvc.perform(patch("/api/users/{id}/last-login", "non-existent-id"))
+        mockMvc.perform(put("/api/users/{id}/last-login", "non-existent-id"))
                 .andExpect(status().isNotFound());
     }
 } 

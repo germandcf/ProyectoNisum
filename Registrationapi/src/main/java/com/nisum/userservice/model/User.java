@@ -1,7 +1,7 @@
 package com.nisum.userservice.model;
 
 import javax.persistence.*;
-import java.util.Date;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -23,16 +23,13 @@ public class User {
     private String password;
 
     @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date created;
+    private LocalDateTime created;
 
     @Column(nullable = false)
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date modified;
+    private LocalDateTime modified;
 
     @Column
-    @Temporal(TemporalType.TIMESTAMP)
-    private Date lastLogin;
+    private LocalDateTime lastLogin;
 
     @Column
     private String token;
@@ -48,14 +45,14 @@ public class User {
         if (id == null) {
             id = UUID.randomUUID().toString();
         }
-        created = new Date();
-        modified = new Date();
-        lastLogin = new Date();
+        created = LocalDateTime.now();
+        modified = LocalDateTime.now();
+        lastLogin = LocalDateTime.now();
     }
 
     @PreUpdate
     protected void onUpdate() {
-        modified = new Date();
+        modified = LocalDateTime.now();
     }
 
     // Constructor vacío requerido por JPA
@@ -95,27 +92,27 @@ public class User {
         this.password = password;
     }
 
-    public Date getCreated() {
+    public LocalDateTime getCreated() {
         return created;
     }
 
-    public void setCreated(Date created) {
+    public void setCreated(LocalDateTime created) {
         this.created = created;
     }
 
-    public Date getModified() {
+    public LocalDateTime getModified() {
         return modified;
     }
 
-    public void setModified(Date modified) {
+    public void setModified(LocalDateTime modified) {
         this.modified = modified;
     }
 
-    public Date getLastLogin() {
+    public LocalDateTime getLastLogin() {
         return lastLogin;
     }
 
-    public void setLastLogin(Date lastLogin) {
+    public void setLastLogin(LocalDateTime lastLogin) {
         this.lastLogin = lastLogin;
     }
 

@@ -1,0 +1,46 @@
+-- Drop tables if they exist
+DROP TABLE IF EXISTS phones CASCADE;
+DROP TABLE IF EXISTS users CASCADE;
+DROP TABLE IF EXISTS validation_config CASCADE;
+
+-- Create validation_config table
+CREATE TABLE validation_config (
+    id VARCHAR(36) NOT NULL,
+    config_key VARCHAR(255) NOT NULL UNIQUE,
+    config_value VARCHAR(1000) NOT NULL,
+    description VARCHAR(255),
+    PRIMARY KEY (id)
+);
+
+-- Create users table
+CREATE TABLE users (
+    id VARCHAR(36) NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    created TIMESTAMP NOT NULL,
+    modified TIMESTAMP NOT NULL,
+    last_login TIMESTAMP NOT NULL,
+    token VARCHAR(255),
+    is_active BOOLEAN NOT NULL,
+    PRIMARY KEY (id)
+);
+
+-- Create phones table
+CREATE TABLE phones (
+    id BIGINT IDENTITY NOT NULL,
+    number VARCHAR(255) NOT NULL,
+    city_code VARCHAR(255) NOT NULL,
+    country_code VARCHAR(255) NOT NULL,
+    user_id VARCHAR(36) NOT NULL,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Create indices
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_phones_user_id ON phones(user_id);
+CREATE INDEX idx_validation_config_key ON validation_config(config_key);
+
+-- Set default value for is_active
+ALTER TABLE users ALTER COLUMN is_active SET DEFAULT TRUE; 

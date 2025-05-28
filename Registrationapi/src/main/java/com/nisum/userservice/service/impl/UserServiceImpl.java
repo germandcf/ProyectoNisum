@@ -21,7 +21,8 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.server.ResponseStatusException;
 
 import javax.crypto.SecretKey;
-import java.util.Date;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -31,82 +32,102 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 @Service
-@Transactional
 public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
+    private final UserValidator userValidator;
     private final ValidationConfigRepository validationConfigRepository;
     private final SecretKey key;
-    private final UserValidator userValidator;
-
-    @Value("${jwt.expiration}")
-    private long jwtExpiration;
+    private final long jwtExpiration;
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     @Autowired
-    public UserServiceImpl(UserRepository userRepository, ValidationConfigRepository validationConfigRepository, UserValidator userValidator) {
+    public UserServiceImpl(UserRepository userRepository, 
+                         UserValidator userValidator,
+                         ValidationConfigRepository validationConfigRepository,
+                         @Value("${jwt.secret}") String jwtSecret,
+                         @Value("${jwt.expiration}") long jwtExpiration) {
         this.userRepository = userRepository;
-        this.validationConfigRepository = validationConfigRepository;
-        this.key = Keys.secretKeyFor(SignatureAlgorithm.HS512);
         this.userValidator = userValidator;
+        this.validationConfigRepository = validationConfigRepository;
+        this.key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
+        this.jwtExpiration = jwtExpiration;
     }
 
     @Override
+    @Transactional
     public UserDTO createUser(UserDTO userDTO) {
         if (userDTO == null) {
-            throw new IllegalArgumentException("El usuario no puede ser nulo");
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "El usuario no puede ser nulo");
         }
 
-        List<String> errores = new ArrayList<>();
+        try {
+            // Validar el usuario
+            userValidator.validateUser(userDTO);
 
-        // Validar email
-        Optional<ValidationConfig> emailRegexConfig = validationConfigRepository.findByConfigKey("email.regex");
-        if (emailRegexConfig.isPresent()) {
-            String regex = emailRegexConfig.get().getConfigValue();
+            // Convertir DTO a entidad
+            User user = new User();
+            user.setName(userDTO.getName());
+            user.setEmail(userDTO.getEmail());
+            user.setPassword(userDTO.getPassword());
+            user.setToken(UUID.randomUUID().toString());
+            user.setActive(true);
             
-            if (!Pattern.matches(regex, userDTO.getEmail())) {
-                errores.add("El email no cumple con el formato requerido");
-            } else if (userRepository.findByEmail(userDTO.getEmail()).isPresent()) {
-                errores.add("El email ya está registrado");
+            LocalDateTime now = LocalDateTime.now();
+            user.setCreated(now);
+            user.setModified(now);
+            user.setLastLogin(now);
+
+            // Manejar los teléfonos si existen
+            if (userDTO.getPhones() != null && !userDTO.getPhones().isEmpty()) {
+                List<Phone> phones = userDTO.getPhones().stream()
+                    .map(phoneDTO -> {
+                        Phone phone = new Phone();
+                        phone.setNumber(phoneDTO.getNumber());
+                        phone.setCityCode(phoneDTO.getCityCode());
+                        phone.setCountryCode(phoneDTO.getCountryCode());
+                        phone.setUser(user);
+                        return phone;
+                    })
+                    .collect(Collectors.toList());
+                user.setPhones(phones);
             }
-        }
 
-        // Validar contraseña
-        Optional<ValidationConfig> passwordMinLengthConfig = validationConfigRepository.findByConfigKey("password.min.length");
-        if (passwordMinLengthConfig.isPresent()) {
-            int minLength = Integer.parseInt(passwordMinLengthConfig.get().getConfigValue());
-            
-            if (userDTO.getPassword().length() < minLength) {
-                errores.add("La contraseña debe tener al menos " + minLength + " caracteres");
+            // Guardar el usuario
+            User savedUser = userRepository.save(user);
+
+            // Convertir la entidad guardada a DTO sin IDs
+            UserDTO savedUserDTO = new UserDTO();
+            savedUserDTO.setId(savedUser.getId());
+            savedUserDTO.setName(savedUser.getName());
+            savedUserDTO.setEmail(savedUser.getEmail());
+            savedUserDTO.setPassword(savedUser.getPassword());
+            savedUserDTO.setCreated(savedUser.getCreated().format(DATE_FORMATTER));
+            savedUserDTO.setModified(savedUser.getModified().format(DATE_FORMATTER));
+            savedUserDTO.setLastLogin(savedUser.getLastLogin().format(DATE_FORMATTER));
+            savedUserDTO.setToken(savedUser.getToken());
+            savedUserDTO.setActive(savedUser.isActive());
+
+            // Convertir los teléfonos guardados a DTOs sin IDs
+            if (savedUser.getPhones() != null && !savedUser.getPhones().isEmpty()) {
+                List<PhoneDTO> phoneDTOs = savedUser.getPhones().stream()
+                    .map(phone -> {
+                        PhoneDTO phoneDTO = new PhoneDTO();
+                        phoneDTO.setNumber(phone.getNumber());
+                        phoneDTO.setCityCode(phone.getCityCode());
+                        phoneDTO.setCountryCode(phone.getCountryCode());
+                        return phoneDTO;
+                    })
+                    .collect(Collectors.toList());
+                savedUserDTO.setPhones(phoneDTOs);
             }
+
+            return savedUserDTO;
+        } catch (ResponseStatusException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         }
-
-        Optional<ValidationConfig> passwordPatternConfig = validationConfigRepository.findByConfigKey("password.pattern");
-        if (passwordPatternConfig.isPresent()) {
-            String pattern = passwordPatternConfig.get().getConfigValue();
-            
-            if (!Pattern.matches(pattern, userDTO.getPassword())) {
-                errores.add("La contraseña no cumple con los requisitos");
-            }
-        }
-
-        if (!errores.isEmpty()) {
-            String mensaje = String.join(", ", errores);
-            throw new IllegalArgumentException(mensaje);
-        }
-
-        User user = new User();
-        user.setId(UUID.randomUUID().toString());
-        user.setName(userDTO.getName());
-        user.setEmail(userDTO.getEmail());
-        user.setPassword(userDTO.getPassword());
-        user.setCreated(new java.util.Date());
-        user.setModified(new java.util.Date());
-        user.setLastLogin(new java.util.Date());
-        user.setToken(UUID.randomUUID().toString());
-        user.setActive(true);
-
-        User savedUser = userRepository.save(user);
-        return convertToDTO(savedUser);
     }
 
     @Override
@@ -132,41 +153,35 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    @Transactional
     public UserDTO updateUser(String id, UserDTO userDTO) {
-        try {
-            User user = userRepository.findById(id)
-                    .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + id));
-
-            userValidator.validateUser(userDTO);
-            
-            user.setName(userDTO.getName());
-            user.setEmail(userDTO.getEmail());
-            user.setModified(new Date());
-
-            User updatedUser = userRepository.save(user);
-            return convertToDTO(updatedUser);
-        } catch (ResponseStatusException e) {
-            throw e;
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        }
+        return userRepository.findById(id)
+                .map(user -> {
+                    user.setName(userDTO.getName());
+                    user.setEmail(userDTO.getEmail());
+                    user.setPassword(userDTO.getPassword());
+                    user.setModified(LocalDateTime.now());
+                    return userRepository.save(user);
+                })
+                .map(this::convertToDTO)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Usuario no encontrado"));
     }
 
     @Override
+    @Transactional
     public void deleteUser(String id) {
-        if (!userRepository.existsById(id)) {
-            throw new ResourceNotFoundException("User not found with id: " + id);
-        }
         userRepository.deleteById(id);
     }
 
     @Override
+    @Transactional
     public Optional<UserDTO> updateLastLogin(String id) {
         return userRepository.findById(id)
                 .map(user -> {
-                    user.setLastLogin(new Date());
-                    return convertToDTO(userRepository.save(user));
-                });
+                    user.setLastLogin(LocalDateTime.now());
+                    return userRepository.save(user);
+                })
+                .map(this::convertToDTO);
     }
 
     private UserDTO convertToDTO(User user) {
@@ -175,9 +190,9 @@ public class UserServiceImpl implements UserService {
         dto.setName(user.getName());
         dto.setEmail(user.getEmail());
         dto.setPassword(user.getPassword());
-        dto.setCreated(user.getCreated());
-        dto.setModified(user.getModified());
-        dto.setLastLogin(user.getLastLogin());
+        dto.setCreated(user.getCreated().format(DATE_FORMATTER));
+        dto.setModified(user.getModified().format(DATE_FORMATTER));
+        dto.setLastLogin(user.getLastLogin() != null ? user.getLastLogin().format(DATE_FORMATTER) : null);
         dto.setToken(user.getToken());
         dto.setActive(user.isActive());
         
@@ -185,7 +200,6 @@ public class UserServiceImpl implements UserService {
             List<PhoneDTO> phoneDTOs = user.getPhones().stream()
                 .map(phone -> {
                     PhoneDTO phoneDTO = new PhoneDTO();
-                    phoneDTO.setId(phone.getId());
                     phoneDTO.setNumber(phone.getNumber());
                     phoneDTO.setCityCode(phone.getCityCode());
                     phoneDTO.setCountryCode(phone.getCountryCode());
@@ -196,23 +210,6 @@ public class UserServiceImpl implements UserService {
         }
         
         return dto;
-    }
-
-    private String generateToken() {
-        try {
-            Date now = new Date();
-            Date expiryDate = new Date(now.getTime() + jwtExpiration);
-            
-            return Jwts.builder()
-                    .setSubject(UUID.randomUUID().toString())
-                    .setIssuedAt(now)
-                    .setExpiration(expiryDate)
-                    .signWith(key)
-                    .compact();
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, 
-                "Error al generar el token: " + e.getMessage());
-        }
     }
 
     private User convertToEntity(UserDTO dto) {
