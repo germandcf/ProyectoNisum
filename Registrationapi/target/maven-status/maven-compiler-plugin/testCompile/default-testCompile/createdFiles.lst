@@ -1,0 +1,3 @@
+com\nisum\userservice\controller\UserControllerTest.class
+com\nisum\userservice\service\UserServiceTest.class
+com\nisum\userservice\service\validator\UserValidatorTest.class

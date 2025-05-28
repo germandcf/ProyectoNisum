@@ -1,0 +1,60 @@
+spring:
+  application:
+    name: user-service
+  datasource:
+    url: jdbc:hsqldb:mem:api_users_db;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;IFEXISTS=TRUE
+    username: sa
+    password: 
+    driver-class-name: org.hsqldb.jdbc.JDBCDriver
+    hikari:
+      maximum-pool-size: 5
+      minimum-idle: 1
+      idle-timeout: 30000
+      connection-timeout: 30000
+      max-lifetime: 1800000
+  jpa:
+    database-platform: org.hibernate.dialect.HSQLDialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc:
+          batch_size: 50
+        order_inserts: true
+        order_updates: true
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:schema.sql
+      data-locations: classpath:data.sql
+      continue-on-error: false
+  mvc:
+    pathmatch:
+      matching-strategy: ant_path_matcher
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+server:
+  port: 8080
+  servlet:
+    context-path: /
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+
+logging:
+  level:
+    org.springframework.web: DEBUG
+    com.nisum.userservice: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+
+jwt:
+  secret: 5365637265744b6579466f724a534f4e576562546f6b656e31323334353637383930
+  expiration: 86400000  # 24 hours in milliseconds
